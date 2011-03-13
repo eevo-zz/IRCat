@@ -182,7 +182,7 @@ sub said {
 
 sub emoted {
     my ($self, $message) = @_;
-    if ($message->{body} =~ /^hugs IRCat$/) {
+    if ($message->{body} =~ /^hugs $self->{nick}$/) {
         hug($self, $message->{who});
     }
 }
