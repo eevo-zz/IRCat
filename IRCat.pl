@@ -116,9 +116,9 @@ sub handle_command {
                 return "Won't delete last admin."
             }
         }
-#        elsif ($command eq "quit") {
-#            $self->shutdown("Bye.");
-#        }
+        elsif ($command eq "quit") {
+            $self->shutdown("Bye.");
+        }
     }
     }
     else {
