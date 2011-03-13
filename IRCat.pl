@@ -17,16 +17,21 @@ our %phrases;
 our @admins;
 our $takeover;
 our $defaultchan;
-$defaultchan = "#channel";
+$defaultchan = "#bottest";
 $takeover = "password"; #rescue your bot if someone has deleted you from the admin list
 @admins = ("admin"); #add default admin nicks
 
 sub hug {
+    our $defaultchan;
     my ($self, $sender) = @_;
     $self->emote(
         channel => $defaultchan,
         body => "hugs $sender",
     );
+}
+
+sub help {
+    return "Nobody's going to help you."
 }
 
 sub handle_command {
@@ -36,11 +41,14 @@ sub handle_command {
     my $self = shift;
     my $body = shift;
     my $sender = shift;
+    if ($body =~ /^!pad/) {
+        return "http://typewith.me/ep/pad/newpad";
+    }
     if ($body =~ /^!hug/) {
         hug($self, $sender);
     }
     elsif ($body =~ /^!help/) {
-        return "Nobody's going to help you."
+        return help();
     }
     elsif ($body =~ /^!add/) {
     if (grep {m|^$sender?$|} @admins) {
@@ -48,12 +56,14 @@ sub handle_command {
         my @args = split(" ",$body);
         my $name = shift(@args);
         my $phrase = join(" ", @args);
-        if ($phrases{$name}) {
-            return "$name already exists!";
-        }
-        else {
-            $phrases{$name} = $phrase;
-            return "Meow!";
+        if ($phrase) {
+            if ($phrases{$name}) {
+                return "$name already exists!";
+            }
+            else {
+                $phrases{$name} = $phrase;
+                return "Meow!";
+            }
         }
     }
     }
@@ -71,7 +81,7 @@ sub handle_command {
     }
     elsif ($body =~ /^!admin/) {
     if (grep {m|^$sender?$|} @admins) {
-        $body =~ s/^!admin//;
+        $body =~ s/^!admin //;
         my @args = split(" ", $body);
         my $command = shift(@args);
         my $cmdargs = join(" ", @args);
@@ -106,6 +116,9 @@ sub handle_command {
                 return "Won't delete last admin."
             }
         }
+#        elsif ($command eq "quit") {
+#            $self->shutdown("Bye.");
+#        }
     }
     }
     else {
@@ -149,7 +162,7 @@ sub said {
            hug($self, $message->{who});
        }
     }
-    elsif ($message->{channel} eq "msg") {
+    if ($message->{channel} eq "msg") {
         my @body = split(" ", $message->{body});
         my $cmd = shift(@body);
         my $args = join(" ", @body);
@@ -159,6 +172,11 @@ sub said {
                     return "No need to take over, you're an admin!";
                 }
                 else {
+                    my $i = 0;
+                    foreach(@admins) {
+                        delete $admins[$i];
+                        $i++;
+                    }
                     push(@admins, $message->{who});
                     $self->say(
                         channel => $defaultchan,
@@ -171,6 +189,14 @@ sub said {
         elsif ($cmd eq "say") {
             if (grep {m|^$message->{who}?$|} @admins) {
                 $self->say(
+                    channel => $defaultchan,
+                    body => $args,
+                );
+            }
+        }
+        elsif ($cmd eq "emote") {
+            if (grep {m|^$message->{who}?$|} @admins) {
+                $self->emote(
                     channel => $defaultchan,
                     body => $args,
                 );
@@ -189,9 +215,11 @@ sub emoted {
 
 my $bot = InternetRelayCat->new(
     server    => "irc.freenode.net",
+#    ssl       => 1,
+#    port      => "6697",
     channels  => [ $defaultchan ],
-    nick      => "IRCat",
-    username  => "ircat",
+    nick      => "serverkitty",
+    username  => "cat",
     name      => "Internet Relay Cat",
     charset   => "utf-8",
 );
