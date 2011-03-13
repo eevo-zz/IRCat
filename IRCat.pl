@@ -17,9 +17,9 @@ our %phrases;
 our @admins;
 our $takeover;
 our $defaultchan;
-$defaultchan = "#0x7c0.org";
-$takeover = "26dedb51f78f282d5a7dd693454c3756";
-@admins = ("eevo");
+$defaultchan = "#channel";
+$takeover = "password"; #rescue your bot if someone has deleted you from the admin list
+@admins = ("admin"); #add default admin nicks
 
 sub hug {
     my ($self, $sender) = @_;
@@ -188,7 +188,7 @@ sub emoted {
 }
 
 my $bot = InternetRelayCat->new(
-    server    => "elser.de.libertirc.net",
+    server    => "irc.freenode.net",
     channels  => [ $defaultchan ],
     nick      => "IRCat",
     username  => "ircat",
