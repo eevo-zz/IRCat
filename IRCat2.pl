@@ -188,7 +188,7 @@ sub handle_address {
     }
     elsif (my ($string) = $message->{body} =~ /^you(?:\s+(.*))?/i) {
         if ($string) {
-            return "No, you $string";
+            return "No, you $string!";
         }
     }
 }
