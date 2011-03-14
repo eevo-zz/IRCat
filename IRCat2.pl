@@ -13,6 +13,10 @@ use strict;
 package InternetRelayCat;
 use base qw( Bot::BasicBot );
 
+use LWP::UserAgent;
+use URI::Find::Rule;
+use URI::Escape;
+
 our (@admins, %phrases, $password, $channel);
 @admins   = ("eevo");
 $password = "724b9c2d7158734437dd27de7234f388";
@@ -167,6 +171,21 @@ sub handle_commands {
     elsif ($message->{body} =~ /^!show /i) {
         return phrase_show($message);
     }
+    elsif ($message->{body} =~ /^!shorten /i) {
+        my @uris = map { $_->[1] } URI::Find::Rule->http->in($message->{body});
+        if (@uris) {
+            my $uri = shift(@uris);
+            my  ( $short_link, $title ) = shorten_url($uri);
+            return "$message->{who}: $short_link - $title";
+        }
+    }
+    elsif ($message->{body} =~ /^!xkcd /i) {
+        $message->{body} =~ s/^!xkcd\s+//;
+        my @args = split(" ",$message->{body});
+        my $num = shift(@args);
+        return unless $num;
+        return xkcd($num);
+    }
     elsif ($message->{body} =~ /^!/) {
         return phrase_get($message);
     } 
@@ -231,11 +250,38 @@ sub handle_query {
     }
 }
 
+sub shorten_url {
+    my $uri = shift;
+    my ( $short_link, $title );
+    my $ua = LWP::UserAgent->new(
+        max_size => 8192,
+        timeout => 30,
+    );
+    my $response = $ua->get($uri);
+    $title = $response->title;
+    my $uri_escaped = uri_escape($uri);
+    my $shorten = $ua->get("http://v.gd/create.php?format=simple&url=$uri_escaped");
+    $short_link = $shorten->content;
+    return ($ short_link, $title);
+}
+
+sub xkcd {
+    my $num = shift;
+    my $ua = LWP::UserAgent->new(
+        max_size => 8192,
+        timeout => 30,
+    );
+    my $response = $ua->get("http://xkcd.com/$num/");
+    return unless $response->is_success;
+    my $title = $response->title;
+    $title =~ s/xkcd\:\s+//;
+    return "http://xkcd.com/$num/ - $title";
+}
 
 #override methods
 
 sub help {
-    return "I'm a bot! Available commands are: !admin, !rem, !del, !phrases, !show"
+    return "I'm a bot! Available commands are: !admin, !rem, !del, !phrases, !show, !shorten"
 }
 
 sub said {
@@ -248,6 +294,15 @@ sub said {
     }
     elsif ($message->{body} =~ /^!/) {
         return handle_commands($self, $message);
+    }
+    else {
+        my @uris = map { $_->[1] } URI::Find::Rule->http->in($message->{body});
+        if (@uris) {
+            my $uri = shift(@uris);
+            return if length $uri < 40;
+            my  ( $short_link, $title ) = shorten_url($uri);
+            return "$short_link - $title (original link by $message->{who})";
+        }
     }
 }
 
@@ -264,6 +319,20 @@ sub emoted {
             channel => $message->{channel},
             body => "slaps $message->{who} around the channel",
         );
+    }
+}
+
+sub chanpart {
+    my ($self, $message) = @_;
+    our $admins;
+    my $i = 0;
+    foreach(@admins) {
+        if ($admins[$i] eq $message->{who}) {
+            delete $admins[$i];
+        }
+        else {
+            $i++;
+        }
     }
 }
 
