@@ -281,7 +281,7 @@ sub xkcd {
 #override methods
 
 sub help {
-    return "I'm a bot! Available commands are: !admin, !rem, !del, !phrases, !show, !shorten"
+    return "I'm a bot! Available commands are: !admin, !rem, !del, !phrases, !show, !shorten, !xkcd"
 }
 
 sub said {
